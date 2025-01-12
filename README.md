@@ -1,4 +1,4 @@
-<!FORSE>
+<FORSE>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -12,6 +12,7 @@
       background: #111;
       color: #fff;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
@@ -21,21 +22,42 @@
       border: 2px solid white;
       background: #222;
     }
+
+    .controls {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0 20px;
+    }
+
+    .button {
+      padding: 10px 20px;
+      font-size: 18px;
+      color: white;
+      background-color: #444;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .button:hover {
+      background-color: #555;
+    }
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+  <div class="controls">
+    <button id="leftButton" class="button">Left</button>
+    <button id="rightButton" class="button">Right</button>
+  </div>
   <script>
+    // Canvas setup
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-
-    // Adjust canvas size to fit the screen
-    function resizeCanvas() {
-      canvas.width = window.innerWidth * 0.9;
-      canvas.height = window.innerHeight * 0.9;
-    }
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
 
     // Game variables
     const player = {
@@ -43,10 +65,10 @@
       y: canvas.height - 60,
       width: 30,
       height: 30,
-      speed: canvas.width * 0.02, // Adjust speed based on canvas width
+      speed: 10, // Speed for button controls
     };
     let obstacles = [];
-    let gameSpeed = canvas.height * 0.0025; // Adjust speed based on canvas height
+    let gameSpeed = 1.5;  // Slow down the falling obstacles slightly
     let isGameOver = false;
     let score = 0;
 
@@ -55,13 +77,13 @@
 
     // Function to create obstacles
     function createObstacle() {
-      const obstacleWidth = Math.random() * (canvas.width * 0.2) + canvas.width * 0.1;
+      const obstacleWidth = Math.random() * 50 + 30;
       const obstacleX = Math.random() * (canvas.width - obstacleWidth);
       obstacles.push({
         x: obstacleX,
         y: -20,
         width: obstacleWidth,
-        height: canvas.height * 0.03,
+        height: 20,
       });
     }
 
@@ -85,7 +107,7 @@
 
       // Move obstacles
       obstacles.forEach((obs) => {
-        obs.y += gameSpeed;
+        obs.y += gameSpeed; // Obstacles move slower with reduced speed
       });
 
       // Remove off-screen obstacles
@@ -103,10 +125,10 @@
         }
       });
 
-      // Increase difficulty
+      // Increase difficulty more often (every 100 points)
       score++;
       if (score % 100 === 0) {
-        gameSpeed += canvas.height * 0.0005;
+        gameSpeed += 0.5;  // Obstacles will still speed up over time
       }
     }
 
@@ -120,18 +142,38 @@
 
       // Display score
       ctx.fillStyle = "white";
-      ctx.font = `${canvas.width * 0.05}px Arial`;
-      ctx.fillText(`Score: ${score}`, canvas.width * 0.05, canvas.height * 0.1);
+      ctx.font = "20px Arial";
+      ctx.fillText(`Score: ${score}`, 10, 30);
 
       // End screen
       if (isGameOver) {
         ctx.fillStyle = "white";
-        ctx.font = `${canvas.width * 0.08}px Arial`;
-        ctx.fillText("Game Over", canvas.width / 2 - canvas.width * 0.2, canvas.height / 2);
-        ctx.font = `${canvas.width * 0.05}px Arial`;
-        ctx.fillText(`Final Score: ${score}`, canvas.width / 2 - canvas.width * 0.15, canvas.height / 2 + canvas.height * 0.05);
+        ctx.font = "20px Arial";
+        ctx.fillText(`Final Score: ${score}`, canvas.width / 2 - 80, canvas.height / 2 - 60);
+
+        // Display clickable registration links
+        ctx.font = "18px Arial";
+        ctx.fillStyle = "lightblue";
+        ctx.fillText("Register Here: OpsQuest", canvas.width / 2 - 150, canvas.height / 2 - 10);
+        ctx.fillText("Register Here: OpsEscape", canvas.width / 2 - 150, canvas.height / 2 + 30);
       }
     }
+
+    // Button controls
+    const leftButton = document.getElementById("leftButton");
+    const rightButton = document.getElementById("rightButton");
+
+    leftButton.addEventListener("click", () => {
+      if (player.x > 0) {
+        player.x -= player.speed;
+      }
+    });
+
+    rightButton.addEventListener("click", () => {
+      if (player.x + player.width < canvas.width) {
+        player.x += player.speed;
+      }
+    });
 
     // Touch controls
     canvas.addEventListener("touchstart", (e) => {
@@ -146,6 +188,35 @@
         player.x += player.speed;
       } else if (deltaX < -50 && player.x > 0) {
         player.x -= player.speed;
+      }
+    });
+
+    // Keyboard controls (keep original functionality)
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" && player.x > 0) {
+        player.x -= player.speed;
+      } else if (e.key === "ArrowRight" && player.x + player.width < canvas.width) {
+        player.x += player.speed;
+      }
+    });
+
+    // Click detection for links
+    canvas.addEventListener("click", (e) => {
+      if (isGameOver) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Check if OpsQuest link is clicked
+        if (x >= canvas.width / 2 - 150 && x <= canvas.width / 2 + 150 && y >= canvas.height / 2 - 40 && y <= canvas.height / 2 - 20) {
+          window.open("https://unstop.com/competitions/opsquest25-kjsim-mumbai-1353587", "_blank");
+        }
+
+        // Check if OpsEscape link is clicked
+        if (x >= canvas.width / 2 - 150 && x <= canvas.width / 2 + 150 &&
+            y >= canvas.height / 2 + 20 && y <= canvas.height / 2 + 40) {
+          window.open("https://unstop.com/o/XPIEkFs?lb=VSpIorue&utm_medium=Share&utm_source=shortUrl", "_blank");
+        }
       }
     });
 
